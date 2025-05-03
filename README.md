@@ -1,57 +1,59 @@
 # servidor-de-log
 
-Documentação - Configuração de Servidor de Log com Rsyslog - RedesBR
-1. Introdução
-Esta documentação descreve o processo de configuração de um servidor de log centralizado utilizando o serviço rsyslog em uma rede com três computadores, conforme a situação-problema apresentada pela empresa fictícia RedesBR. O objetivo é centralizar os arquivos de log para facilitar o monitoramento e a administração da rede.
-2. Etapas da Configuração
-2.1 Designação das Máquinas
-Servidor de log: PC1
-Clientes: PC2 e PC3
-2.2 Configuração do Servidor (PC1)
-1. Instalar o rsyslog:
+Configuração de Servidor de Log com Rsyslog - RedesBR
+
+Introdução
+Esta documentação explica como configurar um servidor de log centralizado usando o serviço rsyslog. A proposta é da empresa fictícia RedesBR, que deseja centralizar os logs de três computadores da rede para facilitar o monitoramento.
+Designação das Máquinas
+- Servidor de log: PC1
+- Clientes: PC2 e PC3
+Configuração do Servidor (PC1)
+Instalação do rsyslog
 sudo apt update
 sudo apt install rsyslog
-2. Editar o arquivo de configuração:
+Edição do arquivo de configuração
 sudo nano /etc/rsyslog.conf
-Descomentar ou adicionar as linhas abaixo:
+Dentro do arquivo, descomente ou adicione as seguintes linhas para permitir o recebimento de logs por UDP e TCP na porta 514:
 
 module(load="imudp")
 input(type="imudp" port="514")
 
 module(load="imtcp")
 input(type="imtcp" port="514")
-
-3. Criar diretório personalizado para logs:
+Criar diretório para armazenar os logs recebidos dos clientes
 sudo mkdir /var/log/cliente-logs
-Adicionar ao final do /etc/rsyslog.conf:
+Ao final do mesmo arquivo /etc/rsyslog.conf, adicione:
 
 $template RemoteLogs,"/var/log/cliente-logs/%HOSTNAME%.log"
 *.* ?RemoteLogs
-
-4. Reiniciar o serviço rsyslog:
+Reiniciar o serviço rsyslog
 sudo systemctl restart rsyslog
-2.3 Configuração dos Clientes (PC2 e PC3)
-1. Instalar o rsyslog:
+Configuração dos Clientes (PC2 e PC3)
+Instalação do rsyslog
 sudo apt update
 sudo apt install rsyslog
-2. Editar o arquivo de configuração:
+Edição do arquivo de configuração
 sudo nano /etc/rsyslog.conf
-Adicionar ao final do arquivo:
+Adicione ao final do arquivo a linha abaixo para enviar os logs para o servidor. Substitua IP_DO_SERVIDOR pelo IP real do PC1:
+
 *.* @IP_DO_SERVIDOR:514
-Substituir IP_DO_SERVIDOR pelo IP real do servidor (PC1).
-3. Reiniciar o rsyslog:
+Reiniciar o serviço rsyslog
 sudo systemctl restart rsyslog
-2.4 Verificação do Funcionamento
-1. No servidor, listar arquivos de log:
+Verificação do Funcionamento
+Verificar no servidor se os arquivos de log foram criados
 ls /var/log/cliente-logs/
-2. Testar envio de log a partir do cliente:
+Enviar uma mensagem de log de teste do cliente
 logger "Teste de log do PC2"
-3. Verificar no servidor se o log foi recebido:
+Checar se o log foi recebido no servidor
 cat /var/log/cliente-logs/PC2.log
-3. Possíveis Problemas e Soluções
-Problema	Solução
-Logs não chegam ao servidor	Verifique se a porta 514 está liberada no firewall (ex: ufw allow 514/udp)
-Arquivos de log não aparecem	Confirme o IP do servidor no arquivo rsyslog.conf dos clientes
-Erro ao usar logger	Verifique se o serviço rsyslog está ativo nos clientes
-4. Conclusão
-A configuração do servidor de log foi realizada com sucesso utilizando o rsyslog. Os computadores clientes estão enviando logs corretamente para o servidor, que os armazena em arquivos separados por nome de host. Essa centralização facilita o monitoramento e a auditoria da rede.
+Possíveis Problemas e Soluções
+
+Problema
+Logs não chegam ao servidor
+Arquivos de log não aparecem
+Solução
+Verifique se a porta 514 está liberada no firewall (ufw allow 514/udp)
+Confirme se o IP do servidor está correto no arquivo rsyslog.conf do cliente
+Verifique se o serviço rsyslog está ativo no cliente
+Conclusão
+A configuração do servidor de log foi concluída com sucesso. Os clientes estão enviando logs corretamente para o servidor, que os armazena em arquivos separados com base no nome da máquina. Isso torna o monitoramento e a auditoria de eventos da rede mais organizada e eficiente.
